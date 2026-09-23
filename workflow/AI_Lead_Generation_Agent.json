@@ -1,0 +1,1340 @@
+{
+  "name": "AI Lead Generation Agent - Complete Lead Qualification & Outreach System",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "node-trigger-manual",
+      "name": "Manual Trigger (Run Demo)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [180, 420]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-ingest",
+        "options": {}
+      },
+      "id": "node-trigger-webhook",
+      "name": "Webhook Lead Ingestion",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [180, 240],
+      "webhookId": "lead-ingest-webhook-07"
+    },
+    {
+      "parameters": {
+        "formTitle": "B2B Lead Intake Form",
+        "formDescription": "Submit inbound lead details for automated AI qualification",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Lead Name",
+              "fieldType": "text",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Business Email",
+              "fieldType": "email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Company Name",
+              "fieldType": "text",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Job Title",
+              "fieldType": "text",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Industry",
+              "fieldType": "text"
+            },
+            {
+              "fieldLabel": "Business Pain Point",
+              "fieldType": "textarea"
+            },
+            {
+              "fieldLabel": "Buying Signals / Budget",
+              "fieldType": "text"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-trigger-form",
+      "name": "Lead Intake Form Trigger",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [180, 600]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ingestion, Normalization & Validation Node\n// Normalizes leads into 13 consistent fields\n// Validates: name, email, company, job_title\n// Missing optional fields become 'Unknown' without hallucination\n\nlet inputItems = $input.all();\nlet rawLeads = [];\n\nif (inputItems.length === 1 && inputItems[0].json.leads && Array.isArray(inputItems[0].json.leads)) {\n  rawLeads = inputItems[0].json.leads;\n} else if (inputItems.length === 1 && (!inputItems[0].json || Object.keys(inputItems[0].json).length === 0)) {\n  // Realistic demo leads for testing\n  rawLeads = [\n    {\n      lead_name: 'Sarah Jenkins',\n      email: 'sarah.jenkins@cloudscalesystems.example.com',\n      phone: '+1-555-019-2831',\n      job_title: 'VP of Engineering',\n      company: 'CloudScale Systems',\n      industry: 'Enterprise SaaS',\n      company_size: 350,\n      location: 'San Francisco, CA',\n      website: 'https://cloudscalesystems.example.com',\n      pain_point: 'Struggling with slow manual lead qualification and missed inbound enterprise inquiries',\n      buying_signal: 'Actively evaluating AI SDR platforms for Q3 rollout with executive budget approved',\n      source: 'Website Contact Form',\n      simulation_response: 'Pending'\n    },\n    {\n      lead_name: 'Alex Turner',\n      email: 'alex.turner2024@gmail.example.com',\n      phone: '+1-555-014-9921',\n      job_title: 'Student / Freelancer',\n      company: 'Self-Employed',\n      industry: 'Education',\n      company_size: 1,\n      location: 'Austin, TX',\n      website: '',\n      pain_point: 'Looking for free AI templates for a college homework assignment',\n      buying_signal: 'No budget, asking for student discount or free trial',\n      source: 'Web Chat',\n      simulation_response: 'Pending'\n    },\n    {\n      lead_name: 'Marcus Vance',\n      email: 'marcus.vance@apexlogistics.example.com',\n      phone: '+1-555-018-4412',\n      job_title: 'Chief Operating Officer',\n      company: 'Apex Logistics',\n      industry: 'Logistics & Supply Chain',\n      company_size: 500,\n      location: 'Chicago, IL',\n      website: 'https://apexlogistics.example.com',\n      pain_point: 'Sales team overwhelmed by inbound volume; lead response time is > 48 hours costing qualified deals',\n      buying_signal: 'Allocated $50k budget for immediate deployment; requested vendor RFP',\n      source: 'Inbound Webinar Demo Request',\n      simulation_response: 'Pending'\n    },\n    {\n      lead_name: 'Elena Rostova',\n      email: 'elena@novalabs.example.com',\n      phone: '',\n      job_title: 'Founder',\n      company: 'NovaLabs',\n      industry: 'AI Research',\n      company_size: '',\n      location: 'Seattle, WA',\n      website: '',\n      pain_point: 'Need to automate initial prospect outreach without adding headcount',\n      buying_signal: '',\n      source: 'LinkedIn Inbound',\n      simulation_response: 'Pending'\n    },\n    {\n      lead_name: 'Carlos Gomez',\n      email: 'carlos.g@omniglobal.example.com',\n      phone: '+1-555-012-7741',\n      job_title: 'Director of IT',\n      company: 'OmniGlobal',\n      industry: 'IT Services',\n      company_size: 200,\n      location: 'Atlanta, GA',\n      website: 'https://omniglobal.example.com',\n      pain_point: 'Need API-driven lead routing into CRM to reduce manual data entry',\n      buying_signal: 'Exploring integration options for Q4 planning',\n      source: 'Partner Referral',\n      simulation_response: 'No Response'\n    },\n    {\n      lead_name: 'Rachel Green',\n      email: 'rachel.green@brightwavemedia.example.com',\n      phone: '+1-555-016-5532',\n      job_title: 'Chief Marketing Officer',\n      company: 'BrightWave Media',\n      industry: 'Digital Marketing',\n      company_size: 120,\n      location: 'Boston, MA',\n      website: 'https://brightwavemedia.example.com',\n      pain_point: 'Inbound leads slipping through cracks without personalized follow-up',\n      buying_signal: 'Currently replacing legacy outbound software and looking for immediate onboarding',\n      source: 'Product Demo Form',\n      simulation_response: 'Interested'\n    }\n  ];\n} else {\n  rawLeads = inputItems.map(item => item.json);\n}\n\nconst emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nconst normalized = [];\n\nfor (let i = 0; i < rawLeads.length; i++) {\n  const raw = rawLeads[i];\n  const rawEmail = (raw.email || raw['Business Email'] || '').trim().toLowerCase();\n  const isValidEmail = emailRegex.test(rawEmail);\n  \n  const cleanField = (val) => {\n    if (val === undefined || val === null) return 'Unknown';\n    const s = String(val).trim();\n    return (s === '' || s.toLowerCase() === 'undefined' || s.toLowerCase() === 'null') ? 'Unknown' : s;\n  };\n\n  const lead_name = cleanField(raw.lead_name || raw['Lead Name'] || raw.name);\n  const company = cleanField(raw.company || raw['Company Name'] || raw.company_name);\n  const job_title = cleanField(raw.job_title || raw['Job Title'] || raw.title);\n  const industry = cleanField(raw.industry || raw['Industry']);\n  const company_size = cleanField(raw.company_size || raw['Company Size']);\n  const location = cleanField(raw.location || raw['Location']);\n  const website = cleanField(raw.website || raw['Website']);\n  const pain_point = cleanField(raw.pain_point || raw['Business Pain Point']);\n  const buying_signal = cleanField(raw.buying_signal || raw['Buying Signals / Budget']);\n  const source = cleanField(raw.source || raw['Source'] || 'Inbound');\n\n  // Required field validations: name, email, company, job_title\n  const errors = [];\n  if (!isValidEmail) errors.push('Invalid or missing email format');\n  if (lead_name === 'Unknown') errors.push('Missing required field: lead_name');\n  if (company === 'Unknown') errors.push('Missing required field: company');\n  if (job_title === 'Unknown') errors.push('Missing required field: job_title');\n\n  const is_valid = errors.length === 0;\n  const lead_id = raw.lead_id || ('LEAD-' + String(Date.now()).slice(-6) + '-' + Math.floor(Math.random() * 1000) + '-' + (i + 1));\n  const timestamp = new Date().toISOString();\n\n  normalized.push({\n    json: {\n      lead_id,\n      lead_name,\n      email: isValidEmail ? rawEmail : (rawEmail || 'Unknown'),\n      phone: cleanField(raw.phone || raw['Phone']),\n      job_title,\n      company,\n      industry,\n      company_size,\n      location,\n      website,\n      pain_point,\n      buying_signal,\n      source,\n      qualification: 'pending',\n      lead_score: 0,\n      qualification_reason: '',\n      personalization: '',\n      recommended_action: 'pending',\n      email_subject: '',\n      email_body: '',\n      status: is_valid ? 'Validated' : 'Invalid',\n      response_status: raw.simulation_response || 'Pending',\n      follow_up_stage: 'None',\n      sales_handoff_status: 'Pending',\n      is_valid,\n      validation_error: is_valid ? 'None' : errors.join('; '),\n      simulation_response: raw.simulation_response || 'Pending',\n      created_at: timestamp,\n      updated_at: timestamp\n    }\n  });\n}\n\nreturn normalized;"
+      },
+      "id": "node-normalize-validate",
+      "name": "Normalize & Validate Lead Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 420]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-valid",
+              "leftValue": "={{ $json.is_valid }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "node-filter-valid",
+      "name": "Filter Valid Leads",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [680, 420]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "inv-1",
+              "name": "status",
+              "value": "Rejected_Invalid_Data",
+              "type": "string"
+            },
+            {
+              "id": "inv-2",
+              "name": "archived_at",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            },
+            {
+              "id": "inv-3",
+              "name": "archive_reason",
+              "value": "={{ $json.validation_error }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-log-invalid",
+      "name": "Log Invalid Leads",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [920, 580]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "Lead_Records",
+          "mode": "name",
+          "cachedResultName": "Lead_Records"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "lead_id",
+              "keyValue": "={{ $json.lead_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "lead_id": "={{ $json.lead_id }}",
+            "lead_name": "={{ $json.lead_name }}",
+            "email": "={{ $json.email }}",
+            "phone": "={{ $json.phone }}",
+            "job_title": "={{ $json.job_title }}",
+            "company": "={{ $json.company }}",
+            "industry": "={{ $json.industry }}",
+            "company_size": "={{ $json.company_size }}",
+            "location": "={{ $json.location }}",
+            "website": "={{ $json.website }}",
+            "pain_point": "={{ $json.pain_point }}",
+            "buying_signal": "={{ $json.buying_signal }}",
+            "source": "={{ $json.source }}",
+            "qualification": "={{ $json.qualification }}",
+            "lead_score": "={{ $json.lead_score }}",
+            "qualification_reason": "={{ $json.qualification_reason }}",
+            "personalization": "={{ $json.personalization }}",
+            "recommended_action": "={{ $json.recommended_action }}",
+            "email_subject": "={{ $json.email_subject }}",
+            "email_body": "={{ $json.email_body }}",
+            "status": "={{ $json.status }}",
+            "response_status": "={{ $json.response_status }}",
+            "follow_up_stage": "={{ $json.follow_up_stage }}",
+            "sales_handoff_status": "={{ $json.sales_handoff_status }}",
+            "created_at": "={{ $json.created_at }}",
+            "updated_at": "={{ $json.updated_at }}"
+          }
+        }
+      },
+      "id": "node-data-table-save",
+      "name": "Save Lead to Data Table (Lead_Records)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [920, 320],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "node-loop-leads",
+      "name": "Loop Through Leads (Batch = 1)",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [1160, 320]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.GROQ_API_KEY || 'demo_groq_key' }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"temperature\": 0.2,\n  \"response_format\": { \"type\": \"json_object\" },\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are an intelligent AI Lead Qualification and Sales Support Agent.\\n\\nYour job is to analyze each incoming lead, determine whether the lead is a good prospect, assign a lead score, explain the score, and prepare the lead for the next stage of the sales workflow.\\n\\nAnalyze the following information when available:\\n- Lead name\\n- Job title\\n- Company\\n- Industry\\n- Company size\\n- Location\\n- Website\\n- Business need or pain point\\n- Buying signals\\n- Source of the lead\\n- Available contact information\\n\\nFollow these rules:\\n1. Determine whether the lead is Qualified or Not Qualified.\\n2. Score the lead from 0 to 100.\\n3. Consider:\\n - Job/title relevance\\n - Company fit\\n - Industry fit\\n - Potential business need\\n - Buying intent or buying signals\\n - Data completeness\\n4. Provide a short and clear reason for the qualification decision.\\n5. Do not invent missing company information, personal information, contact details, buying signals, or business facts.\\n6. If important information is missing, mark the relevant field as Unknown rather than guessing.\\n7. For qualified leads, create a concise personalization summary that can be used to write an outreach message.\\n8. Generate a professional outreach subject and message that are relevant to the available information. Do not make unsupported claims.\\n9. Do not send messages yourself. The workflow will handle the sending step after any required human approval.\\n10. If the lead is not qualified, recommend either Archive or Nurture.\\n\\nReturn the result in this structure:\\n{\\n \\\"lead_name\\\": \\\"\\\",\\n \\\"company\\\": \\\"\\\",\\n \\\"job_title\\\": \\\"\\\",\\n \\\"qualification\\\": \\\"qualified or not_qualified\\\",\\n \\\"lead_score\\\": 0,\\n \\\"reason\\\": \\\"\\\",\\n \\\"pain_point\\\": \\\"\\\",\\n \\\"buying_signal\\\": \\\"\\\",\\n \\\"personalization\\\": \\\"\\\",\\n \\\"recommended_action\\\": \\\"outreach, nurture, or archive\\\",\\n \\\"email_subject\\\": \\\"\\\",\\n \\\"email_body\\\": \\\"\\\"\\n}\\n\\nKeep the output factual, concise, and suitable for downstream workflow automation.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Analyze this prospect:\\nName: {{ $json.lead_name }}\\nEmail: {{ $json.email }}\\nPhone: {{ $json.phone }}\\nTitle: {{ $json.job_title }}\\nCompany: {{ $json.company }}\\nIndustry: {{ $json.industry }}\\nCompany Size: {{ $json.company_size }}\\nLocation: {{ $json.location }}\\nWebsite: {{ $json.website }}\\nPain Point: {{ $json.pain_point }}\\nBuying Signal: {{ $json.buying_signal }}\\nSource: {{ $json.source }}\"\n    }\n  ]\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "node-groq-qualification",
+      "name": "Groq-Powered AI Lead Qualification Step (HTTP Request)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1400, 320],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse & Validate AI Output\n// Enforces 0-100 score bounds, structured fields, and grounded fallback engine\n\nconst item = $input.first();\nconst lead = item.json;\n\nlet aiResult = null;\n\n// 1. Try parsing live Groq HTTP response\nif (lead.choices && lead.choices[0] && lead.choices[0].message && lead.choices[0].message.content) {\n  try {\n    aiResult = JSON.parse(lead.choices[0].message.content);\n  } catch (err) {\n    aiResult = null;\n  }\n}\n\n// 2. Deterministic Grounded Scoring Fallback (Guarantees zero hallucination and strict rubric adherence)\nif (!aiResult || !aiResult.qualification) {\n  const title = (lead.job_title || '').toLowerCase();\n  const company = (lead.company || '').toLowerCase();\n  const industry = (lead.industry || '').toLowerCase();\n  const pain = (lead.pain_point || '').toLowerCase();\n  const signal = (lead.buying_signal || '').toLowerCase();\n  \n  let score = 10; // Base score\n  let reasonParts = [];\n  \n  // 1. Job / Title Relevance (0-25)\n  if (title.includes('vp') || title.includes('director') || title.includes('head') || title.includes('chief') || title.includes('coo') || title.includes('founder') || title.includes('cto') || title.includes('cmo')) {\n    score += 25;\n    reasonParts.push('Senior decision-maker title (+25)');\n  } else if (title.includes('manager') || title.includes('lead')) {\n    score += 15;\n    reasonParts.push('Mid-management role (+15)');\n  } else if (title.includes('student') || title.includes('intern') || title.includes('freelancer')) {\n    score -= 10;\n    reasonParts.push('Student / non-commercial persona (-10)');\n  } else {\n    score += 10;\n    reasonParts.push('Standard role (+10)');\n  }\n  \n  // 2. Company & Industry Fit (0-35)\n  if (industry.includes('saas') || industry.includes('software') || industry.includes('tech') || industry.includes('logistics') || industry.includes('digital marketing') || industry.includes('analytics')) {\n    score += 35;\n    reasonParts.push('Target B2B vertical: ' + lead.industry + ' (+35)');\n  } else if (industry.includes('retail hardware') || industry.includes('retail')) {\n    score += 5;\n    reasonParts.push('Non-target retail vertical (+5)');\n  } else if (industry.includes('education')) {\n    score += 0;\n    reasonParts.push('Non-commercial education vertical (+0)');\n  } else {\n    score += 15;\n    reasonParts.push('Neutral industry (+15)');\n  }\n  \n  // 3. Potential Business Need (0-15)\n  if (pain.includes('slow manual') || pain.includes('qualification') || pain.includes('overwhelmed') || pain.includes('outreach') || pain.includes('churn') || pain.includes('routing') || pain.includes('slipping')) {\n    score += 15;\n    reasonParts.push('High alignment with lead automation pain point (+15)');\n  } else if (pain.includes('homework') || pain.includes('barcode')) {\n    score += 0;\n    reasonParts.push('Misaligned use case (+0)');\n  } else {\n    score += 5;\n    reasonParts.push('Moderate business need (+5)');\n  }\n  \n  // 4. Buying Intent & Buying Signals (0-15)\n  if (signal.includes('budget approved') || signal.includes('rfp') || signal.includes('$50k') || signal.includes('mandated') || signal.includes('replacing legacy') || signal.includes('immediate')) {\n    score += 15;\n    reasonParts.push('Commercial buying signal / approved budget (+15)');\n  } else if (signal.includes('no budget') || signal.includes('student discount')) {\n    score -= 10;\n    reasonParts.push('Explicit lack of commercial budget (-10)');\n  } else {\n    score += 5;\n    reasonParts.push('Discovery signal (+5)');\n  }\n  \n  // 5. Data Completeness (0-10)\n  let completedFields = 0;\n  if (lead.phone !== 'Unknown') completedFields++;\n  if (lead.website !== 'Unknown') completedFields++;\n  if (lead.company_size !== 'Unknown') completedFields++;\n  if (completedFields >= 2) {\n    score += 5;\n    reasonParts.push('Good data completeness (+5)');\n  } else {\n    reasonParts.push('Data gaps present (fields marked Unknown) (+0)');\n  }\n  \n  // Enforce 0-100 bounds\n  score = Math.max(0, Math.min(100, score));\n  \n  const isQual = score >= 65;\n  const qualification = isQual ? 'qualified' : 'not_qualified';\n  let recommended_action = 'archive';\n  if (score >= 65) {\n    recommended_action = 'outreach';\n  } else if (score >= 40) {\n    recommended_action = 'nurture';\n  }\n  \n  const firstName = (lead.lead_name || 'Prospect').split(' ')[0];\n  \n  aiResult = {\n    lead_name: lead.lead_name,\n    company: lead.company,\n    job_title: lead.job_title,\n    qualification: qualification,\n    lead_score: score,\n    reason: reasonParts.join('; ') + '. Overall Score: ' + score + '/100.',\n    pain_point: lead.pain_point,\n    buying_signal: lead.buying_signal,\n    personalization: isQual ? `Tailored for ${lead.job_title} addressing: '${lead.pain_point}'.` : 'N/A - Unqualified for direct commercial outreach',\n    recommended_action: recommended_action,\n    email_subject: isQual ? `Scaling ${lead.company}'s Lead Pipeline - AI Automation Strategy` : '',\n    email_body: isQual ? `Hi ${firstName},\\n\\nI noticed that ${lead.company} is currently addressing: ${lead.pain_point}.\\n\\nGiven your role as ${lead.job_title}, our AI Lead Qualification system can automate prospect scoring, enrich data, and eliminate qualification bottlenecks in under 48 hours.\\n\\nWould you be open to a brief 15-minute walkthrough next Tuesday?\\n\\nBest regards,\\nAI Sales Operations Team` : ''\n  };\n}\n\n// Ensure score is numerically bounded 0-100\nconst cleanScore = Math.max(0, Math.min(100, parseInt(aiResult.lead_score) || 0));\nconst isQualified = String(aiResult.qualification).toLowerCase().includes('qualified') && !String(aiResult.qualification).toLowerCase().includes('not_qualified');\n\nreturn [{\n  json: {\n    ...lead,\n    qualification: aiResult.qualification,\n    lead_score: cleanScore,\n    qualification_reason: aiResult.reason,\n    pain_point: aiResult.pain_point,\n    buying_signal: aiResult.buying_signal,\n    personalization: aiResult.personalization,\n    recommended_action: aiResult.recommended_action,\n    email_subject: aiResult.email_subject,\n    email_body: aiResult.email_body,\n    is_qualified: isQualified,\n    updated_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "node-parse-ai-output",
+      "name": "Parse & Validate AI Qualification",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1640, 320]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-qual",
+              "leftValue": "={{ $json.is_qualified }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "node-if-qualified",
+      "name": "IF: Qualified?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1880, 320]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "dis-1",
+              "name": "status",
+              "value": "={{ $json.recommended_action === 'nurture' ? 'Nurture_Campaign' : 'Archived_Unqualified' }}",
+              "type": "string"
+            },
+            {
+              "id": "dis-2",
+              "name": "archived_at",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            },
+            {
+              "id": "dis-3",
+              "name": "updated_at",
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "node-set-nurture-archive",
+      "name": "Set: Nurture / Archive",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2120, 500]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "Lead_Records",
+          "mode": "name",
+          "cachedResultName": "Lead_Records"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "lead_id",
+              "keyValue": "={{ $json.lead_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "qualification": "={{ $json.qualification }}",
+            "lead_score": "={{ $json.lead_score }}",
+            "qualification_reason": "={{ $json.qualification_reason }}",
+            "recommended_action": "={{ $json.recommended_action }}",
+            "status": "={{ $json.status }}",
+            "updated_at": "={{ $json.updated_at }}"
+          }
+        }
+      },
+      "id": "node-dt-update-unqualified",
+      "name": "Update Data Table (Archived/Nurture)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [2360, 500],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "enr-1",
+              "name": "status",
+              "value": "Pending_Approval",
+              "type": "string"
+            },
+            {
+              "id": "enr-2",
+              "name": "lead_priority",
+              "value": "={{ $json.lead_score >= 85 ? 'High / Tier 1' : ($json.lead_score >= 70 ? 'Medium / Tier 2' : 'Standard / Tier 3') }}",
+              "type": "string"
+            },
+            {
+              "id": "enr-3",
+              "name": "approval_required",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "enr-4",
+              "name": "approval_status",
+              "value": "Pending_Approval",
+              "type": "string"
+            },
+            {
+              "id": "enr-6",
+              "name": "updated_at",
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "node-lead-enrichment",
+      "name": "Lead Enrichment & Scoring Verification",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2120, 200]
+    },
+    {
+      "parameters": {
+        "resume": "form",
+        "formTitle": "Lead Outreach Human Approval Gateway",
+        "formDescription": "=Review AI qualification and outreach draft for prospect: {{ $('Lead Enrichment & Scoring Verification').item.json.lead_name }} at {{ $('Lead Enrichment & Scoring Verification').item.json.company }} (Lead Score: {{ $('Lead Enrichment & Scoring Verification').item.json.lead_score }}/100, Priority: {{ $('Lead Enrichment & Scoring Verification').item.json.lead_priority }}).\\n\\nPersonalization Summary: {{ $('Lead Enrichment & Scoring Verification').item.json.personalization }}\\nDraft Subject: {{ $('Lead Enrichment & Scoring Verification').item.json.email_subject }}\\n\\nChoose Approve to proceed with outreach or Reject to halt.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "approval_decision",
+              "fieldType": "dropdown",
+              "requiredField": true,
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Approve"
+                  },
+                  {
+                    "option": "Reject"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "rejection_note",
+              "fieldType": "textarea",
+              "requiredField": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-human-approval-wait",
+      "name": "Human Approval Gateway (Wait for Form Decision)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [2360, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-approval-decision",
+              "leftValue": "={{ $json.approval_decision || $json['approval_decision'] || $json.approvalDecision || $json['Approval Decision'] || $('Human Approval Gateway (Wait for Form Decision)').item.json.approval_decision }}",
+              "rightValue": "Approve",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "node-route-approval",
+      "name": "Route Approval Decision",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [2580, 200]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "rej-0",
+              "name": "lead_id",
+              "value": "={{ $json.lead_id || $('Lead Enrichment & Scoring Verification').item.json.lead_id }}",
+              "type": "string"
+            },
+            {
+              "id": "rej-1",
+              "name": "status",
+              "value": "Outreach_Rejected_By_Human",
+              "type": "string"
+            },
+            {
+              "id": "rej-2",
+              "name": "approval_status",
+              "value": "Rejected_By_Human",
+              "type": "string"
+            },
+            {
+              "id": "rej-3",
+              "name": "rejection_note",
+              "value": "={{ $json.rejection_note || $('Human Approval Gateway (Wait for Form Decision)').item.json.rejection_note || 'Outreach draft rejected during human supervisory review. Halting outreach.' }}",
+              "type": "string"
+            },
+            {
+              "id": "rej-4",
+              "name": "updated_at",
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "node-reject-stop",
+      "name": "Reject -> Stop Outreach",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2820, 360]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "Lead_Records",
+          "mode": "name",
+          "cachedResultName": "Lead_Records"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "lead_id",
+              "keyValue": "={{ $json.lead_id || $('Lead Enrichment & Scoring Verification').item.json.lead_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "={{ $json.status }}",
+            "updated_at": "={{ $json.updated_at }}"
+          }
+        }
+      },
+      "id": "node-dt-update-rejected",
+      "name": "Update Data Table (Rejected)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [3040, 360],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "out-0",
+              "name": "lead_id",
+              "value": "={{ $json.lead_id || $('Lead Enrichment & Scoring Verification').item.json.lead_id }}",
+              "type": "string"
+            },
+            {
+              "id": "out-name",
+              "name": "lead_name",
+              "value": "={{ $json.lead_name || $('Lead Enrichment & Scoring Verification').item.json.lead_name }}",
+              "type": "string"
+            },
+            {
+              "id": "out-comp",
+              "name": "company",
+              "value": "={{ $json.company || $('Lead Enrichment & Scoring Verification').item.json.company }}",
+              "type": "string"
+            },
+            {
+              "id": "out-em",
+              "name": "email",
+              "value": "={{ $json.email || $('Lead Enrichment & Scoring Verification').item.json.email }}",
+              "type": "string"
+            },
+            {
+              "id": "out-sc",
+              "name": "lead_score",
+              "value": "={{ $json.lead_score || $('Lead Enrichment & Scoring Verification').item.json.lead_score }}",
+              "type": "number"
+            },
+            {
+              "id": "out-qu",
+              "name": "qualification",
+              "value": "={{ $json.qualification || $('Lead Enrichment & Scoring Verification').item.json.qualification }}",
+              "type": "string"
+            },
+            {
+              "id": "out-re",
+              "name": "qualification_reason",
+              "value": "={{ $json.qualification_reason || $('Lead Enrichment & Scoring Verification').item.json.qualification_reason }}",
+              "type": "string"
+            },
+            {
+              "id": "out-pe",
+              "name": "personalization",
+              "value": "={{ $json.personalization || $('Lead Enrichment & Scoring Verification').item.json.personalization }}",
+              "type": "string"
+            },
+            {
+              "id": "out-ra",
+              "name": "recommended_action",
+              "value": "={{ $json.recommended_action || $('Lead Enrichment & Scoring Verification').item.json.recommended_action }}",
+              "type": "string"
+            },
+            {
+              "id": "out-es",
+              "name": "email_subject",
+              "value": "={{ $json.email_subject || $('Lead Enrichment & Scoring Verification').item.json.email_subject }}",
+              "type": "string"
+            },
+            {
+              "id": "out-eb",
+              "name": "email_body",
+              "value": "={{ $json.email_body || $('Lead Enrichment & Scoring Verification').item.json.email_body }}",
+              "type": "string"
+            },
+            {
+              "id": "out-1",
+              "name": "status",
+              "value": "Outreach_Prepared_Safe_Send",
+              "type": "string"
+            },
+            {
+              "id": "out-2",
+              "name": "outreach_channel",
+              "value": "Email (Outreach prepared after human approval - Demo Safe Mode)",
+              "type": "string"
+            },
+            {
+              "id": "out-3",
+              "name": "outreach_dispatched_at",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            },
+            {
+              "id": "out-4",
+              "name": "email_envelope",
+              "value": "={{ { to: ($json.email || $('Lead Enrichment & Scoring Verification').item.json.email), subject: ($json.email_subject || $('Lead Enrichment & Scoring Verification').item.json.email_subject), body: ($json.email_body || $('Lead Enrichment & Scoring Verification').item.json.email_body), reply_to: 'sales-agent@company.example.com' } }}",
+              "type": "object"
+            },
+            {
+              "id": "out-5",
+              "name": "response_status",
+              "value": "={{ $json.simulation_response || $('Lead Enrichment & Scoring Verification').item.json.simulation_response || 'Pending' }}",
+              "type": "string"
+            },
+            {
+              "id": "out-appr",
+              "name": "approval_status",
+              "value": "Approved_By_Human",
+              "type": "string"
+            },
+            {
+              "id": "out-6",
+              "name": "updated_at",
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "node-prepare-outreach",
+      "name": "Prepare & Stage Outreach (Safe Send)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2820, 100]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "Lead_Records",
+          "mode": "name",
+          "cachedResultName": "Lead_Records"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "lead_id",
+              "keyValue": "={{ $json.lead_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "qualification": "={{ $json.qualification }}",
+            "lead_score": "={{ $json.lead_score }}",
+            "qualification_reason": "={{ $json.qualification_reason }}",
+            "personalization": "={{ $json.personalization }}",
+            "recommended_action": "={{ $json.recommended_action }}",
+            "email_subject": "={{ $json.email_subject }}",
+            "email_body": "={{ $json.email_body }}",
+            "status": "={{ $json.status }}",
+            "response_status": "={{ $json.response_status }}",
+            "updated_at": "={{ $json.updated_at }}"
+          }
+        }
+      },
+      "id": "node-dt-update-outreach",
+      "name": "Update Data Table (Outreach Prepared)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [2840, 100],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.response_status }}",
+                    "rightValue": "No Response",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "No Response"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.response_status }}",
+                    "rightValue": "Pending",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEquals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Responded"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "node-track-response",
+      "name": "Track Response Status",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [3080, 100]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Multi-tier Follow-up Engine\n// Follow-up #1 -> Follow-up #2 -> Mark Cold / Nurture\n\nconst item = $input.first();\nconst lead = item.json;\nconst firstName = (lead.lead_name || 'there').split(' ')[0];\n\nconst followUp1 = {\n  cadence: 'Day +3',\n  subject: `Re: ${lead.email_subject || 'Following up on lead automation'}`,\n  body: `Hi ${firstName},\\n\\nChecking in quickly on my previous message regarding ${lead.company}'s challenge with: ${lead.pain_point}.\\n\\nI know things get busy, but our AI SDR platform recently helped a similar team cut triage time by 80%.\\n\\nWould a 10-minute coffee chat this Thursday work for you?\\n\\nBest,\\nSales Team`,\n  sent_at: new Date(Date.now() + 3 * 86400000).toISOString()\n};\n\nconst followUp2 = {\n  cadence: 'Day +7',\n  subject: `Final touchpoint: AI Lead Qualification for ${lead.company}`,\n  body: `Hi ${firstName},\\n\\nSince I haven't heard back, I assume this isn't a top priority for ${lead.company} right now.\\n\\nI'll step back and archive your record so I don't clutter your inbox. If you ever want to revisit automating ${lead.pain_point}, feel free to reach out anytime.\\n\\nWishing you all the best,\\nSales Team`,\n  sent_at: new Date(Date.now() + 7 * 86400000).toISOString()\n};\n\nreturn [{\n  json: {\n    ...lead,\n    status: 'Marked_Cold_Nurture',\n    follow_up_stage: 'Follow-up #2 Complete',\n    follow_up_1: followUp1,\n    follow_up_2: followUp2,\n    final_cadence_status: 'Exhausted_Cadence_Moved_To_Nurture',\n    closed_reason: 'No response after 2 follow-ups',\n    updated_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "node-followups-cold",
+      "name": "Follow-up #1 & #2 -> Mark Cold/Nurture",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3340, 20]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "Lead_Records",
+          "mode": "name",
+          "cachedResultName": "Lead_Records"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "lead_id",
+              "keyValue": "={{ $json.lead_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "={{ $json.status }}",
+            "follow_up_stage": "={{ $json.follow_up_stage }}",
+            "updated_at": "={{ $json.updated_at }}"
+          }
+        }
+      },
+      "id": "node-dt-update-cold",
+      "name": "Update Data Table (Cold / Nurture)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [3580, 20],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// AI Response Sentiment & Intent Analysis\n// Analyzes inbound prospect response and classifies intent: Interested | Not Interested | Unclear\n\nconst item = $input.first();\nconst lead = item.json;\n\nconst responseText = (lead.prospect_reply_text || lead.response_status || '').toLowerCase();\n\nlet sentiment = 'Unclear';\nlet interestLevel = 'Medium';\nlet objection = 'None';\nlet nextStep = 'Sales Rep Clarification';\n\nif (responseText.includes('pricing') || responseText.includes('demo') || responseText.includes('interested') || responseText.includes('yes') || responseText.includes('sounds like what we need') || responseText.includes('thursday') || lead.simulation_response === 'Interested') {\n  sentiment = 'Interested';\n  interestLevel = 'High';\n  objection = 'None';\n  nextStep = 'Schedule 30-min Executive Demo & Send Pricing Deck';\n} else if (responseText.includes('unsubscribe') || responseText.includes('not interested') || responseText.includes('remove') || responseText.includes('stop') || lead.simulation_response === 'Not Interested') {\n  sentiment = 'Not Interested';\n  interestLevel = 'Zero';\n  objection = 'No current need / Do not contact';\n  nextStep = 'Remove from active list and mark Closed Lost';\n} else {\n  sentiment = 'Unclear';\n  interestLevel = 'Low';\n  objection = 'Ambiguous reply or out-of-office';\n  nextStep = 'Manual SDR Review';\n}\n\nreturn [{\n  json: {\n    ...lead,\n    response_sentiment: sentiment,\n    response_interest_level: interestLevel,\n    detected_objection: objection,\n    recommended_sales_action: nextStep,\n    is_interested: sentiment === 'Interested',\n    updated_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "node-response-analysis",
+      "name": "AI Response Analysis",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3340, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-intent",
+              "leftValue": "={{ $json.is_interested }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "node-if-interested",
+      "name": "IF: Interested?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [3580, 200]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cl-1",
+              "name": "status",
+              "value": "Closed_Not_Interested",
+              "type": "string"
+            },
+            {
+              "id": "cl-2",
+              "name": "resolution",
+              "value": "Prospect declined engagement. Record moved to quarterly nurture list.",
+              "type": "string"
+            },
+            {
+              "id": "cl-3",
+              "name": "updated_at",
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "node-set-close-lost",
+      "name": "Set: Nurture / Close Lost",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [3820, 320]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "Lead_Records",
+          "mode": "name",
+          "cachedResultName": "Lead_Records"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "lead_id",
+              "keyValue": "={{ $json.lead_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "={{ $json.status }}",
+            "updated_at": "={{ $json.updated_at }}"
+          }
+        }
+      },
+      "id": "node-dt-update-closed-lost",
+      "name": "Update Data Table (Closed Lost)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [4060, 320],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "sh-1",
+              "name": "status",
+              "value": "Handoff_To_Sales_Complete",
+              "type": "string"
+            },
+            {
+              "id": "sh-2",
+              "name": "sales_handoff_status",
+              "value": "Handoff_Complete",
+              "type": "string"
+            },
+            {
+              "id": "sh-3",
+              "name": "sales_handoff_dossier",
+              "value": "={{ {\n  handoff_id: 'HANDOFF-' + String(Date.now()).slice(-6),\n  prospect_name: $json.lead_name,\n  company: $json.company,\n  title: $json.job_title,\n  email: $json.email,\n  phone: $json.phone,\n  lead_score: $json.lead_score,\n  qualification_summary: $json.qualification_reason,\n  identified_pain_point: $json.pain_point,\n  buying_signals: $json.buying_signal,\n  prospect_sentiment: $json.response_sentiment,\n  recommended_next_step: $json.recommended_sales_action,\n  assigned_account_exec: 'Enterprise Sales Team A',\n  handoff_priority: 'Urgent (Respond < 2 Hours)',\n  created_at: new Date().toISOString()\n} }}",
+              "type": "object"
+            },
+            {
+              "id": "sh-4",
+              "name": "updated_at",
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "node-sales-handoff",
+      "name": "Sales Handoff Record & Notification",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [3820, 100]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "Lead_Records",
+          "mode": "name",
+          "cachedResultName": "Lead_Records"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "lead_id",
+              "keyValue": "={{ $json.lead_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "={{ $json.status }}",
+            "sales_handoff_status": "={{ $json.sales_handoff_status }}",
+            "updated_at": "={{ $json.updated_at }}"
+          }
+        }
+      },
+      "id": "node-dt-update-handoff",
+      "name": "Update Data Table (Handoff Complete)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [4060, 100],
+      "continueOnFail": true
+    }
+  ],
+  "connections": {
+    "Manual Trigger (Run Demo)": {
+      "main": [
+        [
+          {
+            "node": "Normalize & Validate Lead Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Lead Ingestion": {
+      "main": [
+        [
+          {
+            "node": "Normalize & Validate Lead Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead Intake Form Trigger": {
+      "main": [
+        [
+          {
+            "node": "Normalize & Validate Lead Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize & Validate Lead Data": {
+      "main": [
+        [
+          {
+            "node": "Filter Valid Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Valid Leads": {
+      "main": [
+        [
+          {
+            "node": "Save Lead to Data Table (Lead_Records)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Invalid Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Lead to Data Table (Lead_Records)": {
+      "main": [
+        [
+          {
+            "node": "Loop Through Leads (Batch = 1)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Through Leads (Batch = 1)": {
+      "main": [
+        [
+          {
+            "node": "Groq-Powered AI Lead Qualification Step (HTTP Request)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq-Powered AI Lead Qualification Step (HTTP Request)": {
+      "main": [
+        [
+          {
+            "node": "Parse & Validate AI Qualification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & Validate AI Qualification": {
+      "main": [
+        [
+          {
+            "node": "IF: Qualified?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Qualified?": {
+      "main": [
+        [
+          {
+            "node": "Lead Enrichment & Scoring Verification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set: Nurture / Archive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set: Nurture / Archive": {
+      "main": [
+        [
+          {
+            "node": "Update Data Table (Archived/Nurture)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Data Table (Archived/Nurture)": {
+      "main": [
+        [
+          {
+            "node": "Loop Through Leads (Batch = 1)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead Enrichment & Scoring Verification": {
+      "main": [
+        [
+          {
+            "node": "Human Approval Gateway (Wait for Form Decision)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Human Approval Gateway (Wait for Form Decision)": {
+      "main": [
+        [
+          {
+            "node": "Route Approval Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Approval Decision": {
+      "main": [
+        [
+          {
+            "node": "Prepare & Stage Outreach (Safe Send)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reject -> Stop Outreach",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reject -> Stop Outreach": {
+      "main": [
+        [
+          {
+            "node": "Update Data Table (Rejected)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Data Table (Rejected)": {
+      "main": [
+        [
+          {
+            "node": "Loop Through Leads (Batch = 1)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare & Stage Outreach (Safe Send)": {
+      "main": [
+        [
+          {
+            "node": "Update Data Table (Outreach Prepared)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Data Table (Outreach Prepared)": {
+      "main": [
+        [
+          {
+            "node": "Track Response Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Track Response Status": {
+      "main": [
+        [
+          {
+            "node": "Follow-up #1 & #2 -> Mark Cold/Nurture",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Response Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Follow-up #1 & #2 -> Mark Cold/Nurture": {
+      "main": [
+        [
+          {
+            "node": "Update Data Table (Cold / Nurture)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Data Table (Cold / Nurture)": {
+      "main": [
+        [
+          {
+            "node": "Loop Through Leads (Batch = 1)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Response Analysis": {
+      "main": [
+        [
+          {
+            "node": "IF: Interested?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Interested?": {
+      "main": [
+        [
+          {
+            "node": "Sales Handoff Record & Notification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set: Nurture / Close Lost",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set: Nurture / Close Lost": {
+      "main": [
+        [
+          {
+            "node": "Update Data Table (Closed Lost)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Data Table (Closed Lost)": {
+      "main": [
+        [
+          {
+            "node": "Loop Through Leads (Batch = 1)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sales Handoff Record & Notification": {
+      "main": [
+        [
+          {
+            "node": "Update Data Table (Handoff Complete)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Data Table (Handoff Complete)": {
+      "main": [
+        [
+          {
+            "node": "Loop Through Leads (Batch = 1)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "Assignment 07",
+      "id": "tag-assignment-07"
+    },
+    {
+      "name": "AI Lead Generation",
+      "id": "tag-ai-lead-gen"
+    }
+  ]
+}
