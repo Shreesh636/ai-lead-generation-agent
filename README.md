@@ -179,3 +179,8 @@ python scripts/run_test_suite.py
 
 ## 9. License
 This project is open-source and licensed under the [MIT License](LICENSE).
+GitHub Repository:
+https://github.com/Shreesh636/ai-lead-generation-agent
+
+Live n8n Workflow:
+[[your n8n workflow URL]](https://shreesh636.app.n8n.cloud/workflow/K8wxng3cS48cDWuJ?projectId=2s40F74JwprZahD9)
